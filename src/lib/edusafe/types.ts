@@ -67,9 +67,14 @@ export interface Report {
 export interface Acta {
   id: string;
   caseId: string;
+  caseCode: string;
+  type: "borrador" | "final";
   createdAt: number;
+  generatedBy: string;
   verifyCode: string;
+  fileName: string;
   pdfDataUrl?: string;
+  caseSnapshot: Report;
 }
 
 export interface AuditLog {
