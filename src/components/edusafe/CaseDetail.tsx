@@ -108,11 +108,11 @@ function CaseDetail({ report, onBack }: { report: Report; onBack: () => void }) 
   }
 
   function generateDraft() {
-    const { dataUrl, verifyCode } = generateActaPDF(report, students);
-    const a = document.createElement("a");
-    a.href = dataUrl; a.download = `acta-borrador-${report.id}.pdf`; a.click();
-    addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: "Ana Ruiz", action: "Borrador acta generado", caseId: report.id });
-    void verifyCode;
+    const { acta, blob, dataUrl, fileName } = buildActa(report, students, "borrador", MEDIATOR_NAME);
+    addActa(acta);
+    downloadPDF(blob, dataUrl, fileName);
+    addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: MEDIATOR_NAME, action: "Borrador acta generado", caseId: report.id });
+    toast.success("Borrador descargado. Puedes seguir editando el caso.");
   }
 
   const isClosed = report.status === "resuelto" || report.status === "cerrado_falsa";
