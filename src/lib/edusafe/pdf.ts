@@ -4,7 +4,10 @@ import { genVerifyCode } from "./store";
 
 export function generateActaPDF(report: Report, students: Student[], opts?: { type?: "borrador" | "final"; verifyCode?: string }): { dataUrl: string; blob: Blob; verifyCode: string; fileName: string } {
   const doc = new jsPDF();
-  const code = genVerifyCode();
+  const code = opts?.verifyCode || genVerifyCode();
+  const tipo = opts?.type === "borrador" ? "BORRADOR" : "ACTA";
+  const ymd = new Date().toISOString().slice(0,10).replace(/-/g,"");
+  const fileName = `${tipo === "BORRADOR" ? "BORRADOR" : "ACTA"}_${report.id}_${ymd}.pdf`;
   const W = 210;
   let y = 18;
 
