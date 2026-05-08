@@ -16,7 +16,7 @@ export function generateActaPDF(report: Report, students: Student[], opts?: { ty
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text("ACTA DE RESOLUCIÓN DE CONFLICTOS - CEIP San Agustín", 12, 14);
+  doc.text(`${tipo} DE RESOLUCIÓN DE CONFLICTOS - CEIP San Agustín`, 12, 14);
   doc.setTextColor(40, 40, 40);
   y = 32;
 
