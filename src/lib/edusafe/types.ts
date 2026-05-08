@@ -32,6 +32,7 @@ export interface ChecklistItem {
   label: string;
   done: boolean;
   date?: string;
+  notes?: string;
 }
 
 export interface Report {
