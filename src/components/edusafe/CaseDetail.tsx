@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useReports, useStudents, useAudit, useActas } from "@/lib/edusafe/store";
 import type { Report, ChatMessage, Severity } from "@/lib/edusafe/types";
-import { generateActaPDF } from "@/lib/edusafe/pdf";
+import { buildActa, downloadPDF } from "@/lib/edusafe/actas";
 import { AlertTriangle, Send, FileText, X, ArrowLeft, MessageSquare, ListChecks } from "lucide-react";
+
+const MEDIATOR_NAME = "Ana Ruiz";
+
 
 const SEV_COLOR: Record<Severity, string> = {
   CRITICA: "bg-red-600 text-white",
