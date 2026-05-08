@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import type { Report, Student } from "./types";
 import { genVerifyCode } from "./store";
 
-export function generateActaPDF(report: Report, students: Student[]): { dataUrl: string; verifyCode: string } {
+export function generateActaPDF(report: Report, students: Student[], opts?: { type?: "borrador" | "final"; verifyCode?: string }): { dataUrl: string; blob: Blob; verifyCode: string; fileName: string } {
   const doc = new jsPDF();
   const code = genVerifyCode();
   const W = 210;
