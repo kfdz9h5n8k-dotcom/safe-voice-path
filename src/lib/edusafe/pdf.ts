@@ -74,5 +74,5 @@ export function generateActaPDF(report: Report, students: Student[], opts?: { ty
   doc.text(`Código de verificación: ${code}`, 12, y); y += 4;
   doc.text(`Verifique este documento en edusafe.app/verificar/${code}`, 12, y);
 
-  return { dataUrl: doc.output("dataurlstring"), verifyCode: code };
+  return { dataUrl: doc.output("dataurlstring") as string, blob: doc.output("blob") as Blob, verifyCode: code, fileName };
 }
