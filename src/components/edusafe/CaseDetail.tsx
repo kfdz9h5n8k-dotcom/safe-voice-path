@@ -3,7 +3,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useReports, useStudents, useAudit, useActas } from "@/lib/edusafe/store";
 import type { Report, ChatMessage, Severity } from "@/lib/edusafe/types";
-import { buildActa, downloadPDF } from "@/lib/edusafe/actas";
+import { buildActa } from "@/lib/edusafe/actas";
+import { ActaViewer } from "@/components/edusafe/ActaViewer";
 import { AlertTriangle, Send, FileText, X, ArrowLeft, MessageSquare, ListChecks } from "lucide-react";
 
 const MEDIATOR_NAME = "Ana Ruiz";
@@ -25,6 +26,8 @@ const ROLE_COLOR: Record<string, string> = {
   agresor: "bg-red-100 text-red-700",
   testigo: "bg-gray-100 text-gray-600",
 };
+
+type ViewerState = { blob: Blob; dataUrl: string; fileName: string; title: string } | null;
 
 export function CaseDetailPage({ caseId }: { caseId: string }) {
   const [reports] = useReports();
@@ -51,6 +54,8 @@ function CaseDetail({ report, onBack }: { report: Report; onBack: () => void }) 
   const [showClose, setShowClose] = useState(false);
   const [text, setText] = useState("");
   const [tab, setTab] = useState<"chat" | "checklist">("chat");
+  const [viewer, setViewer] = useState<ViewerState>(null);
+  const [pendingBackOnClose, setPendingBackOnClose] = useState(false);
 
   const antecedentes = useMemo(() => {
     const out: { name: string; count: number }[] = [];
@@ -110,9 +115,17 @@ function CaseDetail({ report, onBack }: { report: Report; onBack: () => void }) 
   function generateDraft() {
     const { acta, blob, dataUrl, fileName } = buildActa(report, students, "borrador", MEDIATOR_NAME);
     addActa(acta);
-    downloadPDF(blob, dataUrl, fileName);
     addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: MEDIATOR_NAME, action: "Borrador acta generado", caseId: report.id });
-    toast.success("Borrador descargado. Puedes seguir editando el caso.");
+    setViewer({ blob, dataUrl, fileName, title: `Borrador acta ${report.id}` });
+    toast.success("Borrador generado. Puedes verlo, compartirlo o guardarlo.");
+  }
+
+  function handleViewerClose() {
+    setViewer(null);
+    if (pendingBackOnClose) {
+      setPendingBackOnClose(false);
+      onBack();
+    }
   }
 
   const isClosed = report.status === "resuelto" || report.status === "cerrado_falsa";
@@ -271,11 +284,21 @@ function CaseDetail({ report, onBack }: { report: Report; onBack: () => void }) 
         update({ status: newStatus, closure: { ...closure, closedAt, actaId: acta.id } });
         addActa(acta);
         addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: MEDIATOR_NAME, action: "Caso cerrado", caseId: report.id });
-        downloadPDF(blob, dataUrl, fileName);
         setShowClose(false);
-        toast.success("Caso cerrado. Acta generada y descargada.");
-        setTimeout(() => onBack(), 500);
+        // Abrimos el visor con el acta final. Cuando el usuario lo cierre, volvemos al inbox.
+        setPendingBackOnClose(true);
+        setViewer({ blob, dataUrl, fileName, title: `Acta final ${report.id}` });
+        toast.success("Caso cerrado. Acta final generada.");
       }} />}
+
+      <ActaViewer
+        open={viewer !== null}
+        onClose={handleViewerClose}
+        blob={viewer?.blob ?? null}
+        dataUrl={viewer?.dataUrl ?? ""}
+        fileName={viewer?.fileName ?? ""}
+        title={viewer?.title}
+      />
     </div>
   );
 }
