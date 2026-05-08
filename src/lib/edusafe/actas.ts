@@ -33,11 +33,12 @@ export function downloadPDF(blob: Blob | null, dataUrl: string, fileName: string
 }
 
 export function downloadActa(acta: Acta, students: Student[]) {
+  const fallbackName = acta.fileName || `ACTA_${acta.caseId}.pdf`;
   if (acta.pdfDataUrl) {
-    downloadPDF(null, acta.pdfDataUrl, acta.fileName);
+    downloadPDF(null, acta.pdfDataUrl, fallbackName);
     return;
   }
-  // Regenerate from snapshot if dataUrl was too large to store
+  if (!acta.caseSnapshot) return;
   const { dataUrl, blob, fileName } = generateActaPDF(acta.caseSnapshot, students, {
     type: acta.type,
     verifyCode: acta.verifyCode,
