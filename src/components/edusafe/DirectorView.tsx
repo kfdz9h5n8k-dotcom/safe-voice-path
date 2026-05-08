@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useReports, useStudents, useAudit, useActas } from "@/lib/edusafe/store";
+import { downloadActa } from "@/lib/edusafe/actas";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { Download } from "lucide-react";
 import type { Severity } from "@/lib/edusafe/types";
