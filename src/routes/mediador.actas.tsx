@@ -3,8 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { initSeedIfNeeded, useActas, useStudents, useView } from "@/lib/edusafe/store";
 import { ViewSwitcher } from "@/components/edusafe/ViewSwitcher";
 import { MediatorHeader } from "@/components/edusafe/MediatorView";
-import { downloadActa } from "@/lib/edusafe/actas";
-import { Download, FileText } from "lucide-react";
+import { ActaViewer } from "@/components/edusafe/ActaViewer";
+import { resolveActaPDF } from "@/lib/edusafe/actas";
+import type { Acta } from "@/lib/edusafe/types";
+import { Eye, FileText } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/mediador/actas")({
   component: ActasRoute,
@@ -31,11 +34,14 @@ function ActasRoute() {
   );
 }
 
+type ViewerState = { blob: Blob; dataUrl: string; fileName: string; title: string } | null;
+
 function ActasArchive() {
   const [actas] = useActas();
   const students = useStudents();
   const [tipo, setTipo] = useState<"todas" | "borrador" | "final">("todas");
   const [q, setQ] = useState("");
+  const [viewer, setViewer] = useState<ViewerState>(null);
 
   const list = useMemo(() => {
     return actas.filter(a => {
@@ -44,6 +50,16 @@ function ActasArchive() {
       return true;
     });
   }, [actas, tipo, q]);
+
+  function openActa(a: Acta) {
+    try {
+      const { blob, dataUrl, fileName } = resolveActaPDF(a, students);
+      const title = a.type === "final" ? `Acta final ${a.caseCode}` : `Borrador ${a.caseCode}`;
+      setViewer({ blob, dataUrl, fileName, title });
+    } catch {
+      toast.error("No se pudo abrir el acta. Intenta de nuevo.");
+    }
+  }
 
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto">
@@ -87,9 +103,9 @@ function ActasArchive() {
                 <td className="px-4 py-3 text-gray-600">{a.generatedBy}</td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-500">{a.verifyCode}</td>
                 <td className="px-4 py-3">
-                  <button onClick={() => downloadActa(a, students)}
+                  <button onClick={() => openActa(a)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B3D91] text-white text-xs font-semibold hover:bg-blue-900">
-                    <Download size={14} /> Descargar
+                    <Eye size={14} /> Ver
                   </button>
                 </td>
               </tr>
@@ -100,6 +116,15 @@ function ActasArchive() {
           </tbody>
         </table>
       </div>
+
+      <ActaViewer
+        open={viewer !== null}
+        onClose={() => setViewer(null)}
+        blob={viewer?.blob ?? null}
+        dataUrl={viewer?.dataUrl ?? ""}
+        fileName={viewer?.fileName ?? ""}
+        title={viewer?.title}
+      />
     </div>
   );
 }
