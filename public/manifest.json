@@ -1,0 +1,12 @@
+{
+  "name": "EduSafe powered by Moriarty",
+  "short_name": "EduSafe",
+  "description": "Canal ético escolar contra el bullying",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0B3D91",
+  "background_color": "#FFFFFF",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
