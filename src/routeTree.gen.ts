@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MediadorActasRouteImport } from './routes/mediador.actas'
 import { Route as MediadorCasoCaseIdRouteImport } from './routes/mediador.caso.$caseId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MediadorActasRoute = MediadorActasRouteImport.update({
+  id: '/mediador/actas',
+  path: '/mediador/actas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MediadorCasoCaseIdRoute = MediadorCasoCaseIdRouteImport.update({
@@ -25,27 +31,31 @@ const MediadorCasoCaseIdRoute = MediadorCasoCaseIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/mediador/actas': typeof MediadorActasRoute
   '/mediador/caso/$caseId': typeof MediadorCasoCaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/mediador/actas': typeof MediadorActasRoute
   '/mediador/caso/$caseId': typeof MediadorCasoCaseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/mediador/actas': typeof MediadorActasRoute
   '/mediador/caso/$caseId': typeof MediadorCasoCaseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/mediador/caso/$caseId'
+  fullPaths: '/' | '/mediador/actas' | '/mediador/caso/$caseId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/mediador/caso/$caseId'
-  id: '__root__' | '/' | '/mediador/caso/$caseId'
+  to: '/' | '/mediador/actas' | '/mediador/caso/$caseId'
+  id: '__root__' | '/' | '/mediador/actas' | '/mediador/caso/$caseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MediadorActasRoute: typeof MediadorActasRoute
   MediadorCasoCaseIdRoute: typeof MediadorCasoCaseIdRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mediador/actas': {
+      id: '/mediador/actas'
+      path: '/mediador/actas'
+      fullPath: '/mediador/actas'
+      preLoaderRoute: typeof MediadorActasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mediador/caso/$caseId': {
@@ -70,8 +87,19 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MediadorActasRoute: MediadorActasRoute,
   MediadorCasoCaseIdRoute: MediadorCasoCaseIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
