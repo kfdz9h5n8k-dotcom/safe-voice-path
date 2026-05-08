@@ -1,26 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { initSeedIfNeeded, useView } from "@/lib/edusafe/store";
+import { ViewSwitcher } from "@/components/edusafe/ViewSwitcher";
+import { StudentView } from "@/components/edusafe/StudentView";
+import { MediatorView } from "@/components/edusafe/MediatorView";
+import { DirectorView } from "@/components/edusafe/DirectorView";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
-
 function Index() {
-  return <PlaceholderIndex />;
+  const [ready, setReady] = useState(false);
+  const [view] = useView();
+
+  useEffect(() => {
+    initSeedIfNeeded();
+    setReady(true);
+  }, []);
+
+  if (!ready) return null;
+
+  return (
+    <>
+      <ViewSwitcher />
+      {view === "estudiante" && <StudentView />}
+      {view === "mediador" && <MediatorView />}
+      {view === "director" && <DirectorView />}
+    </>
+  );
 }
