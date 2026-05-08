@@ -81,6 +81,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "EduSafe powered by Moriarty" },
       { property: "og:description", content: "Canal ético escolar contra el bullying" },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "EduSafe powered by Moriarty" },
+      { name: "twitter:description", content: "Canal ético escolar contra el bullying" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ac3d0db3-ddf9-4bce-bdc6-523c81f5637c/id-preview-58e8c322--a518bad3-505a-4c1b-8e4f-4ccdaa71ecef.lovable.app-1778255227651.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ac3d0db3-ddf9-4bce-bdc6-523c81f5637c/id-preview-58e8c322--a518bad3-505a-4c1b-8e4f-4ccdaa71ecef.lovable.app-1778255227651.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
