@@ -274,7 +274,7 @@ function CaseDetail({ report, onBack }: { report: Report; onBack: () => void }) 
         downloadPDF(blob, dataUrl, fileName);
         setShowClose(false);
         toast.success("Caso cerrado. Acta generada y descargada.");
-        setTimeout(() => navigate({ to: "/" }), 500);
+        setTimeout(() => onBack(), 500);
       }} />}
     </div>
   );
