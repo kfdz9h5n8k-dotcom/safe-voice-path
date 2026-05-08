@@ -264,16 +264,17 @@ function CaseDetail({ report, onBack }: { report: Report; onBack: () => void }) 
       </div>
 
       {showClose && <CloseModal report={report} onClose={() => setShowClose(false)} onConfirm={(closure) => {
-        const updated = { ...report, closure: { ...closure, closedAt: Date.now() } } as Report;
-        const { dataUrl, verifyCode } = generateActaPDF(updated, students);
         const newStatus = closure.estadoFinal === "Falsa alarma" ? "cerrado_falsa" : "resuelto";
-        const acta = { id: "ACTA-" + report.id, caseId: report.id, createdAt: Date.now(), verifyCode, pdfDataUrl: dataUrl };
-        update({ status: newStatus, closure: { ...closure, closedAt: Date.now(), actaId: acta.id } });
+        const closedAt = Date.now();
+        const updated: Report = { ...report, status: newStatus, closure: { ...closure, closedAt }, updatedAt: closedAt };
+        const { acta, blob, dataUrl, fileName } = buildActa(updated, students, "final", MEDIATOR_NAME);
+        update({ status: newStatus, closure: { ...closure, closedAt, actaId: acta.id } });
         addActa(acta);
-        addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: "Ana Ruiz", action: "Caso cerrado", caseId: report.id });
-        const a = document.createElement("a"); a.href = dataUrl; a.download = `acta-${report.id}.pdf`; a.click();
+        addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: MEDIATOR_NAME, action: "Caso cerrado", caseId: report.id });
+        downloadPDF(blob, dataUrl, fileName);
         setShowClose(false);
-        setTimeout(() => onBack(), 400);
+        toast.success("Caso cerrado. Acta generada y descargada.");
+        setTimeout(() => navigate({ to: "/" }), 500);
       }} />}
     </div>
   );
