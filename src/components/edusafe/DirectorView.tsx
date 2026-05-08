@@ -276,3 +276,43 @@ function SchoolHeatmap({ counts }: { counts: Record<string, number> }) {
     </svg>
   );
 }
+
+function ActasFinales() {
+  const [actas] = useActas();
+  const students = useStudents();
+  const finales = actas.filter(a => a.type === "final");
+  if (finales.length === 0) {
+    return <p className="text-xs text-gray-400">No hay actas finales generadas este periodo.</p>;
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[600px]">
+        <thead className="text-xs text-gray-400 uppercase">
+          <tr>
+            <th className="text-left pb-2">Caso</th>
+            <th className="text-left pb-2">Fecha cierre</th>
+            <th className="text-left pb-2">Mediador</th>
+            <th className="text-left pb-2">CSV code</th>
+            <th className="text-left pb-2">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {finales.map(a => (
+            <tr key={a.id} className="border-t border-gray-100">
+              <td className="py-2 font-mono font-bold text-[#0B3D91]">{a.caseCode}</td>
+              <td className="py-2 text-gray-600">{new Date(a.createdAt).toLocaleString("es-ES")}</td>
+              <td className="py-2 text-gray-600">{a.generatedBy}</td>
+              <td className="py-2 font-mono text-xs text-gray-500">{a.verifyCode}</td>
+              <td className="py-2">
+                <button onClick={() => downloadActa(a, students)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B3D91] text-white text-xs font-semibold hover:bg-blue-900">
+                  <Download size={14} /> Descargar
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
