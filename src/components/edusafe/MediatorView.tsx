@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useReports, useStaff, useStudents } from "@/lib/edusafe/store";
 import type { Report, Severity } from "@/lib/edusafe/types";
-import { AlertTriangle, Inbox } from "lucide-react";
+import { AlertTriangle, Inbox, FileText } from "lucide-react";
 
 const SEV_COLOR: Record<Severity, string> = {
   CRITICA: "bg-red-600 text-white",
@@ -19,10 +19,18 @@ export function MediatorHeader() {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-3">
       <div className="w-8 h-8 rounded-lg bg-[#0B3D91] text-white flex items-center justify-center text-sm font-bold">E</div>
-      <div>
+      <div className="flex-1">
         <div className="text-sm font-bold text-gray-800">EduSafe · Mediador</div>
         <div className="text-xs text-gray-500">CEIP San Agustín</div>
       </div>
+      <nav className="flex items-center gap-1 text-sm">
+        <Link to="/" className="px-3 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center gap-1.5">
+          <Inbox size={14} /> Bandeja
+        </Link>
+        <Link to="/mediador/actas" className="px-3 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center gap-1.5">
+          <FileText size={14} /> Actas
+        </Link>
+      </nav>
     </header>
   );
 }

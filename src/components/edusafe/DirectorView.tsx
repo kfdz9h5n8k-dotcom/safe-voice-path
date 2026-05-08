@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useReports, useStudents, useAudit, useActas } from "@/lib/edusafe/store";
+import { downloadActa } from "@/lib/edusafe/actas";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { Download } from "lucide-react";
 import type { Severity } from "@/lib/edusafe/types";
@@ -190,26 +191,8 @@ export function DirectorView() {
 
         {/* D8 actas */}
         <Card className="col-span-12">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Archivo de actas</h3>
-          {actas.length === 0 ? (
-            <p className="text-xs text-gray-400">No hay actas generadas todavía.</p>
-          ) : (
-            <div className="space-y-2">
-              {actas.map(a => (
-                <div key={a.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2 text-sm">
-                  <div>
-                    <div className="font-mono font-bold text-[#0B3D91]">{a.id}</div>
-                    <div className="text-xs text-gray-400">{new Date(a.createdAt).toLocaleString("es-ES")} · Verif: {a.verifyCode}</div>
-                  </div>
-                  {a.pdfDataUrl && (
-                    <a href={a.pdfDataUrl} download={`${a.id}.pdf`} className="flex items-center gap-1 text-[#0B3D91] hover:underline text-xs font-semibold">
-                      <Download size={14}/> PDF
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Archivo de actas finales</h3>
+          <ActasFinales />
         </Card>
       </div>
     </div>
@@ -291,5 +274,45 @@ function SchoolHeatmap({ counts }: { counts: Record<string, number> }) {
         <text x="200" y="184" textAnchor="middle" className="text-[12px] font-bold fill-gray-800">Patio ({counts["Patio"]||0})</text>
       </g>
     </svg>
+  );
+}
+
+function ActasFinales() {
+  const [actas] = useActas();
+  const students = useStudents();
+  const finales = actas.filter(a => a.type === "final");
+  if (finales.length === 0) {
+    return <p className="text-xs text-gray-400">No hay actas finales generadas este periodo.</p>;
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[600px]">
+        <thead className="text-xs text-gray-400 uppercase">
+          <tr>
+            <th className="text-left pb-2">Caso</th>
+            <th className="text-left pb-2">Fecha cierre</th>
+            <th className="text-left pb-2">Mediador</th>
+            <th className="text-left pb-2">CSV code</th>
+            <th className="text-left pb-2">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {finales.map(a => (
+            <tr key={a.id} className="border-t border-gray-100">
+              <td className="py-2 font-mono font-bold text-[#0B3D91]">{a.caseCode}</td>
+              <td className="py-2 text-gray-600">{new Date(a.createdAt).toLocaleString("es-ES")}</td>
+              <td className="py-2 text-gray-600">{a.generatedBy}</td>
+              <td className="py-2 font-mono text-xs text-gray-500">{a.verifyCode}</td>
+              <td className="py-2">
+                <button onClick={() => downloadActa(a, students)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B3D91] text-white text-xs font-semibold hover:bg-blue-900">
+                  <Download size={14} /> Descargar
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

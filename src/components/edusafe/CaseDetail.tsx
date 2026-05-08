@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useReports, useStudents, useAudit, useActas } from "@/lib/edusafe/store";
 import type { Report, ChatMessage, Severity } from "@/lib/edusafe/types";
-import { generateActaPDF } from "@/lib/edusafe/pdf";
+import { buildActa, downloadPDF } from "@/lib/edusafe/actas";
 import { AlertTriangle, Send, FileText, X, ArrowLeft, MessageSquare, ListChecks } from "lucide-react";
+
+const MEDIATOR_NAME = "Ana Ruiz";
+
 
 const SEV_COLOR: Record<Severity, string> = {
   CRITICA: "bg-red-600 text-white",
@@ -104,11 +108,11 @@ function CaseDetail({ report, onBack }: { report: Report; onBack: () => void }) 
   }
 
   function generateDraft() {
-    const { dataUrl, verifyCode } = generateActaPDF(report, students);
-    const a = document.createElement("a");
-    a.href = dataUrl; a.download = `acta-borrador-${report.id}.pdf`; a.click();
-    addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: "Ana Ruiz", action: "Borrador acta generado", caseId: report.id });
-    void verifyCode;
+    const { acta, blob, dataUrl, fileName } = buildActa(report, students, "borrador", MEDIATOR_NAME);
+    addActa(acta);
+    downloadPDF(blob, dataUrl, fileName);
+    addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: MEDIATOR_NAME, action: "Borrador acta generado", caseId: report.id });
+    toast.success("Borrador descargado. Puedes seguir editando el caso.");
   }
 
   const isClosed = report.status === "resuelto" || report.status === "cerrado_falsa";
@@ -260,16 +264,17 @@ function CaseDetail({ report, onBack }: { report: Report; onBack: () => void }) 
       </div>
 
       {showClose && <CloseModal report={report} onClose={() => setShowClose(false)} onConfirm={(closure) => {
-        const updated = { ...report, closure: { ...closure, closedAt: Date.now() } } as Report;
-        const { dataUrl, verifyCode } = generateActaPDF(updated, students);
         const newStatus = closure.estadoFinal === "Falsa alarma" ? "cerrado_falsa" : "resuelto";
-        const acta = { id: "ACTA-" + report.id, caseId: report.id, createdAt: Date.now(), verifyCode, pdfDataUrl: dataUrl };
-        update({ status: newStatus, closure: { ...closure, closedAt: Date.now(), actaId: acta.id } });
+        const closedAt = Date.now();
+        const updated: Report = { ...report, status: newStatus, closure: { ...closure, closedAt }, updatedAt: closedAt };
+        const { acta, blob, dataUrl, fileName } = buildActa(updated, students, "final", MEDIATOR_NAME);
+        update({ status: newStatus, closure: { ...closure, closedAt, actaId: acta.id } });
         addActa(acta);
-        addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: "Ana Ruiz", action: "Caso cerrado", caseId: report.id });
-        const a = document.createElement("a"); a.href = dataUrl; a.download = `acta-${report.id}.pdf`; a.click();
+        addAudit({ id: "a" + Date.now(), ts: Date.now(), actor: MEDIATOR_NAME, action: "Caso cerrado", caseId: report.id });
+        downloadPDF(blob, dataUrl, fileName);
         setShowClose(false);
-        setTimeout(() => onBack(), 400);
+        toast.success("Caso cerrado. Acta generada y descargada.");
+        setTimeout(() => onBack(), 500);
       }} />}
     </div>
   );

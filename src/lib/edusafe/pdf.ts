@@ -2,9 +2,12 @@ import jsPDF from "jspdf";
 import type { Report, Student } from "./types";
 import { genVerifyCode } from "./store";
 
-export function generateActaPDF(report: Report, students: Student[]): { dataUrl: string; verifyCode: string } {
+export function generateActaPDF(report: Report, students: Student[], opts?: { type?: "borrador" | "final"; verifyCode?: string }): { dataUrl: string; blob: Blob; verifyCode: string; fileName: string } {
   const doc = new jsPDF();
-  const code = genVerifyCode();
+  const code = opts?.verifyCode || genVerifyCode();
+  const tipo = opts?.type === "borrador" ? "BORRADOR" : "ACTA";
+  const ymd = new Date().toISOString().slice(0,10).replace(/-/g,"");
+  const fileName = `${tipo === "BORRADOR" ? "BORRADOR" : "ACTA"}_${report.id}_${ymd}.pdf`;
   const W = 210;
   let y = 18;
 
@@ -13,7 +16,7 @@ export function generateActaPDF(report: Report, students: Student[]): { dataUrl:
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text("ACTA DE RESOLUCIÓN DE CONFLICTOS - CEIP San Agustín", 12, 14);
+  doc.text(`${tipo} DE RESOLUCIÓN DE CONFLICTOS - CEIP San Agustín`, 12, 14);
   doc.setTextColor(40, 40, 40);
   y = 32;
 
@@ -71,5 +74,5 @@ export function generateActaPDF(report: Report, students: Student[]): { dataUrl:
   doc.text(`Código de verificación: ${code}`, 12, y); y += 4;
   doc.text(`Verifique este documento en edusafe.app/verificar/${code}`, 12, y);
 
-  return { dataUrl: doc.output("dataurlstring"), verifyCode: code };
+  return { dataUrl: doc.output("dataurlstring") as string, blob: doc.output("blob") as Blob, verifyCode: code, fileName };
 }
