@@ -20,11 +20,6 @@ function isIOSDevice(): boolean {
   return false;
 }
 
-/**
- * Visor de actas a pantalla completa.
- * En iOS Safari el iframe de PDF queda en blanco, por eso mostramos una pantalla
- * intermedia con acciones nativas (compartir / abrir en Safari).
- */
 export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: ActaViewerProps) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [iframeError, setIframeError] = useState(false);
@@ -34,7 +29,6 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
     setIsIOS(isIOSDevice());
   }, []);
 
-  // Crear un object URL desde el blob solo si NO es iOS (en iOS no se usa el iframe).
   useEffect(() => {
     if (!open) {
       setIframeError(false);
@@ -49,7 +43,6 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
     };
   }, [open, blob, isIOS]);
 
-  // Bloquear scroll del fondo cuando está abierto.
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -61,6 +54,10 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
 
   const viewerSrc = objectUrl || dataUrl;
   const canPreview = Boolean(viewerSrc);
+
+  function handleOpenAndShare() {
+    openPDFInNewTab(blob, dataUrl);
+  }
 
   async function handleShare() {
     if (!blob) {
@@ -85,7 +82,6 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/80 flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#0B3D91] text-white shadow-lg">
         <button
           onClick={onClose}
@@ -97,16 +93,9 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
         <div className="flex-1 text-center px-2 truncate text-sm font-semibold">
           {title || fileName}
         </div>
-        <button
-          onClick={handleShare}
-          className="p-2 -mr-2 rounded-lg hover:bg-white/10"
-          aria-label="Compartir o guardar"
-        >
-          <Share2 size={20} />
-        </button>
+        <div className="w-9" aria-hidden />
       </div>
 
-      {/* Cuerpo */}
       <div className={`flex-1 overflow-auto relative ${isIOS ? "bg-gray-100" : "bg-gray-700"}`}>
         {isIOS ? (
           <div className="min-h-full flex items-center justify-center p-6">
@@ -119,7 +108,7 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
                 <p className="text-sm text-gray-500 mt-1">{title}</p>
               )}
 
-              <div className="mt-6 w-full flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 text-left">
+              <div className="mt-6 w-full flex items-center gap-3 border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-left">
                 <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
                   <FileText size={20} className="text-[#0B3D91]" />
                 </div>
@@ -129,21 +118,8 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
                 </div>
               </div>
 
-              <button
-                onClick={handleShare}
-                className="mt-6 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#0B3D91] text-white text-sm font-semibold hover:bg-blue-900"
-              >
-                <Share2 size={16} /> Compartir o guardar
-              </button>
-              <button
-                onClick={handleOpenNewTab}
-                className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                <ExternalLink size={16} /> Abrir en Safari
-              </button>
-
-              <p className="mt-5 text-xs text-gray-500 leading-relaxed">
-                Tu dispositivo no muestra PDFs embebidos. Pulsa "Compartir o guardar" para enviar el acta por WhatsApp, AirDrop, email o guardar en Archivos.
+              <p className="mt-6 text-xs text-gray-600 leading-relaxed">
+                Pulsa el botón de abajo. Se abrirá el PDF en una pestaña del navegador. Desde ahí, usa el botón Compartir de Safari (la flecha hacia arriba en la barra inferior) para guardar el acta en Archivos, enviarla por WhatsApp, AirDrop o email.
               </p>
             </div>
           </div>
@@ -172,27 +148,36 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
         )}
       </div>
 
-      {/* Footer */}
       <div className="bg-white border-t border-gray-200 px-3 py-2 flex flex-wrap gap-2 justify-center sm:justify-end safe-bottom">
-        <button
-          onClick={handleOpenNewTab}
-          className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-        >
-          <ExternalLink size={15} /> Abrir en pestaña
-        </button>
-        <button
-          onClick={handleShare}
-          className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0B3D91] text-white text-sm font-semibold hover:bg-blue-900"
-        >
-          <Share2 size={15} /> Compartir / Guardar
-        </button>
-        <button
-          onClick={handleDownload}
-          className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          title="Solo funciona en escritorio"
-        >
-          <Download size={15} /> Descargar
-        </button>
+        {isIOS ? (
+          <button
+            onClick={handleOpenAndShare}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#0B3D91] text-white text-sm font-semibold hover:bg-blue-900"
+          >
+            <Share2 size={16} /> Abrir y compartir
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={handleOpenNewTab}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              <ExternalLink size={15} /> Abrir en pestaña
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0B3D91] text-white text-sm font-semibold hover:bg-blue-900"
+            >
+              <Share2 size={15} /> Compartir / Guardar
+            </button>
+            <button
+              onClick={handleDownload}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              <Download size={15} /> Descargar
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
