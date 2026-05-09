@@ -1,11 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useReports, useStudents, useAudit, useActas } from "@/lib/edusafe/store";
-import { downloadActa } from "@/lib/edusafe/actas";
+import { resolveActaPDF } from "@/lib/edusafe/actas";
+import { ActaViewer } from "@/components/edusafe/ActaViewer";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
-import { Download } from "lucide-react";
-import type { Severity } from "@/lib/edusafe/types";
+import { Eye } from "lucide-react";
+import { toast } from "sonner";
+import type { Severity, Acta } from "@/lib/edusafe/types";
 
 const SEV_WEIGHT: Record<Severity, number> = { CRITICA: 4, ALTA: 3, MEDIA: 2, BAJA: 1 };
+
+type ViewerState = { blob: Blob; dataUrl: string; fileName: string; title: string } | null;
 
 export function DirectorView() {
   const [reports] = useReports();
@@ -280,39 +284,63 @@ function SchoolHeatmap({ counts }: { counts: Record<string, number> }) {
 function ActasFinales() {
   const [actas] = useActas();
   const students = useStudents();
+  const [viewer, setViewer] = useState<ViewerState>(null);
   const finales = actas.filter(a => a.type === "final");
+
+  function openActa(a: Acta) {
+    try {
+      const { blob, dataUrl, fileName } = resolveActaPDF(a, students);
+      setViewer({ blob, dataUrl, fileName, title: `Acta final ${a.caseCode}` });
+    } catch {
+      toast.error("No se pudo abrir el acta. Intenta de nuevo.");
+    }
+  }
+
   if (finales.length === 0) {
     return <p className="text-xs text-gray-400">No hay actas finales generadas este periodo.</p>;
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm min-w-[600px]">
-        <thead className="text-xs text-gray-400 uppercase">
-          <tr>
-            <th className="text-left pb-2">Caso</th>
-            <th className="text-left pb-2">Fecha cierre</th>
-            <th className="text-left pb-2">Mediador</th>
-            <th className="text-left pb-2">CSV code</th>
-            <th className="text-left pb-2">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {finales.map(a => (
-            <tr key={a.id} className="border-t border-gray-100">
-              <td className="py-2 font-mono font-bold text-[#0B3D91]">{a.caseCode}</td>
-              <td className="py-2 text-gray-600">{new Date(a.createdAt).toLocaleString("es-ES")}</td>
-              <td className="py-2 text-gray-600">{a.generatedBy}</td>
-              <td className="py-2 font-mono text-xs text-gray-500">{a.verifyCode}</td>
-              <td className="py-2">
-                <button onClick={() => downloadActa(a, students)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B3D91] text-white text-xs font-semibold hover:bg-blue-900">
-                  <Download size={14} /> Descargar
-                </button>
-              </td>
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
+          <thead className="text-xs text-gray-400 uppercase">
+            <tr>
+              <th className="text-left pb-2">Caso</th>
+              <th className="text-left pb-2">Fecha cierre</th>
+              <th className="text-left pb-2">Mediador</th>
+              <th className="text-left pb-2">CSV code</th>
+              <th className="text-left pb-2">Acción</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {finales.map(a => (
+              <tr key={a.id} className="border-t border-gray-100">
+                <td className="py-2 font-mono font-bold text-[#0B3D91]">{a.caseCode}</td>
+                <td className="py-2 text-gray-600">{new Date(a.createdAt).toLocaleString("es-ES")}</td>
+                <td className="py-2 text-gray-600">{a.generatedBy}</td>
+                <td className="py-2 font-mono text-xs text-gray-500">{a.verifyCode}</td>
+                <td className="py-2">
+                  <button
+                    onClick={() => openActa(a)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B3D91] text-white text-xs font-semibold hover:bg-blue-900"
+                  >
+                    <Eye size={14} /> Ver
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <ActaViewer
+        open={viewer !== null}
+        onClose={() => setViewer(null)}
+        blob={viewer?.blob ?? null}
+        dataUrl={viewer?.dataUrl ?? ""}
+        fileName={viewer?.fileName ?? ""}
+        title={viewer?.title}
+      />
+    </>
   );
 }
