@@ -23,6 +23,9 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
 
   // Crear un object URL desde el blob para evitar problemas de tamaño con el dataUrl en el iframe.
   useEffect(() => {
+    if (!open) {
+      setIframeError(false);
+    }
     if (!open || !blob) return;
     const url = URL.createObjectURL(blob);
     setObjectUrl(url);
@@ -44,6 +47,7 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
   if (!open) return null;
 
   const viewerSrc = objectUrl || dataUrl;
+  const canPreview = Boolean(viewerSrc);
 
   async function handleShare() {
     if (!blob) {
@@ -93,7 +97,7 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
 
       {/* Cuerpo: visor PDF */}
       <div className="flex-1 overflow-hidden bg-gray-700 relative">
-        {!iframeError ? (
+        {canPreview && !iframeError ? (
           <iframe
             src={viewerSrc}
             title={fileName}
@@ -103,7 +107,9 @@ export function ActaViewer({ open, onClose, blob, dataUrl, fileName, title }: Ac
         ) : (
           <div className="h-full flex flex-col items-center justify-center gap-4 text-white p-6 text-center">
             <p className="text-sm opacity-80">
-              Tu dispositivo no puede mostrar el PDF embebido.
+              {!canPreview
+                ? "No se pudo preparar el PDF para previsualizarlo."
+                : "Tu dispositivo no puede mostrar el PDF embebido."}
               Pulsa abajo para abrirlo en una pestaña nueva o guardarlo.
             </p>
             <button
